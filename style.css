@@ -299,3 +299,72 @@ a:hover {
   pointer-events: none;
   z-index: -1;
 }
+
+@media (max-width: 768px) {
+  body {
+    padding: 10px 0;
+  }
+
+  .box {
+    width: 90%;
+    max-width: 100%;
+    padding: 20px;
+  }
+
+  #readme {
+    padding: 15px;
+    font-size: 14px;
+  }
+
+  #readme h1, #readme h2, #readme h3 {
+    font-size: 18px;
+  }
+
+  #readme table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  #readme table tbody {
+    display: table;
+    width: 100%;
+  }
+
+  #readme table td {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 10px 0;
+  }
+  #readme table td p {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 0 0;
+  }
+
+  #readme img {
+      max-width: auto;
+      height: auto;
+      border-radius: 6px;
+      margin: 0;
+      padding: 0;
+  }
+
+  .blob {
+    width: 250px;
+    height: 250px;
+    filter: blur(50px);
+  }
+
+  .glass {
+    background: conic-gradient(
+      from 30deg at 33% 80%,
+      rgba(255, 255, 255, 0.08),
+      transparent 4%
+    );
+    box-shadow: 0 0 15px 4px rgba(255, 255, 255, 0.04);
+  }
+}
+

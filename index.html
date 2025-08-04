@@ -38,31 +38,33 @@
         });
     </script>
     <script>
-fetch('https://raw.githubusercontent.com/GoozyaStudio/.github/main/profile/README.md')
-  .then(res => res.text())
-  .then(md => {
-    const baseURL = 'https://raw.githubusercontent.com/GoozyaStudio/.github/main/profile/';
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('https://raw.githubusercontent.com/GoozyaStudio/.github/main/profile/README.md')
+              .then(res => res.text())
+              .then(md => {
+                const baseURL = 'https://raw.githubusercontent.com/GoozyaStudio/.github/main/profile/';
 
-    // Преобразуем Markdown в HTML (с относительными путями)
-    const htmlRaw = marked.parse(md);
+                // Преобразуем Markdown в HTML (с относительными путями)
+                const htmlRaw = marked.parse(md);
 
-    // Создаем временный контейнер, чтобы работать с DOM
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlRaw;
+                // Создаем временный контейнер, чтобы работать с DOM
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlRaw;
 
-    // Исправляем все <img src="..."> с относительными путями
-    tempDiv.querySelectorAll('img').forEach(img => {
-      const src = img.getAttribute('src');
-      if(src && !src.startsWith('http')) {
-        // Убираем возможный ./ в начале
-        const cleanSrc = src.replace(/^\.\//, '');
-        img.src = baseURL + cleanSrc;
-      }
-    });
+                // Исправляем все <img src="..."> с относительными путями
+                tempDiv.querySelectorAll('img').forEach(img => {
+                  const src = img.getAttribute('src');
+                  if(src && !src.startsWith('http')) {
+                    // Убираем возможный ./ в начале
+                    const cleanSrc = src.replace(/^\.\//, '');
+                    img.src = baseURL + cleanSrc;
+                  }
+                });
 
-    // Вставляем исправленный HTML в страницу
-    document.getElementById('readme').innerHTML = tempDiv.innerHTML;
-  });
+                // Вставляем исправленный HTML в страницу
+                document.getElementById('readme').innerHTML = tempDiv.innerHTML;
+              });
+          });
     </script>
 </body>
 </html>
