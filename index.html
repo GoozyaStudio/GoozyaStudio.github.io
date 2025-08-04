@@ -7,20 +7,62 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>GoozyaStudio</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
-    <div class="blob"></div>
-    <div class="blob"></div>
-    <div class="blob"></div>
+<div id="background">
+  <div class="blob"></div>
+  <div class="blob"></div>
+  <div class="blob"></div>
+  <canvas id="network"></canvas>
+  <div class="noise"></div> <!-- Шум сюда -->
+</div>
+<div id="content" class="box">
+    <div class="glass"></div>
+    <div id="readme">Загрузка...</div>
 
-    <div class="box">
-        <h1>GoozyaStudio</h1>
-        <p>Пишу программки на питоне и не только --> <a href="https://github.com/GoozyaStudio" target="_blank">GitHub</a></p>
-        <div class="glass"></div>
-    </div>
-    
-    <canvas id="network"></canvas>
+<!--    <div class="box">-->
+<!--    <h1>GoozyaStudio</h1>-->
+<!--    <p>Пишу программки на питоне и не только &ndash;&gt; <a href="https://github.com/GoozyaStudio" target="_blank">GitHub</a></p>-->
+<!--    <div class="glass"></div>-->
+</div>
     <script src="particles.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      fetch('https://raw.githubusercontent.com/GoozyaStudio/.github/refs/heads/main/profile/README.md')
+        .then(res => res.text())
+        .then(md => {
+          const html = marked.parse(md);
+          document.getElementById('readme').innerHTML = html;
+        });
+    </script>
+    <script>
+fetch('https://raw.githubusercontent.com/GoozyaStudio/.github/main/profile/README.md')
+  .then(res => res.text())
+  .then(md => {
+    const baseURL = 'https://raw.githubusercontent.com/GoozyaStudio/.github/main/profile/';
+
+    // Преобразуем Markdown в HTML (с относительными путями)
+    const htmlRaw = marked.parse(md);
+
+    // Создаем временный контейнер, чтобы работать с DOM
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlRaw;
+
+    // Исправляем все <img src="..."> с относительными путями
+    tempDiv.querySelectorAll('img').forEach(img => {
+      const src = img.getAttribute('src');
+      if(src && !src.startsWith('http')) {
+        // Убираем возможный ./ в начале
+        const cleanSrc = src.replace(/^\.\//, '');
+        img.src = baseURL + cleanSrc;
+      }
+    });
+
+    // Вставляем исправленный HTML в страницу
+    document.getElementById('readme').innerHTML = tempDiv.innerHTML;
+  });
+    </script>
 </body>
 </html>

@@ -4,18 +4,23 @@
     box-sizing: border-box;
 }
 
-body{
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background: #0e0d1a;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: "Century Gothic", sans-serif;
-    position: relative;
+html {
+  scroll-behavior: smooth;
 }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px 0;
+  background: #0e2136;
+  display: flex;
+  flex-direction: column;
+  align-items: center;      /* по горизонтали центрируем */
+  justify-content: flex-start;  /* сверху */
+  overflow-y: auto;         /* вертикальная прокрутка у body */
+  background-attachment: fixed;
+}
+
 
 canvas#network {
   position: fixed;
@@ -39,34 +44,35 @@ canvas#network {
 }
 
 .blob {
-    position: absolute;
-    width: 400px;
-    height: 400px;
-    border-radius: 50%;
-    filter: blur(80px);
-    mix-blend-mode: screen;
-    animation: float 20s ease-in-out infinite alternate;
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  filter: blur(80px);
+  mix-blend-mode: screen;
+  animation: float 20s ease-in-out infinite alternate;
+  z-index: 1;
 }
 
 .blob:nth-child(1) {
-    background: radial-gradient(circle, rgba(0, 255, 255, 0.5), transparent 70%);
-    left: -100px;
-    top: -100px;
-    animation-delay: 0s;
+  background: radial-gradient(circle, rgba(0, 255, 255, 0.5), transparent 70%);
+  left: -150px;
+  top: -150px;
+  animation-delay: 0s;
 }
 
 .blob:nth-child(2) {
-    background: radial-gradient(circle, rgba(255, 0, 255, 0.4), transparent 70%);
-    right: -150px;
-    top: 30%;
-    animation-delay: 4s;
+  background: radial-gradient(circle, rgba(255, 0, 255, 0.4), transparent 70%);
+  right: -150px;
+  top: 30%;
+  animation-delay: 4s;
 }
 
 .blob:nth-child(3) {
-    background: radial-gradient(circle, rgba(0, 128, 255, 0.5), transparent 70%);
-    left: 30%;
-    bottom: -100px;
-    animation-delay: 8s;
+  background: radial-gradient(circle, rgba(0, 128, 255, 0.5), transparent 70%);
+  left: 40%;
+  bottom: -150px;
+  animation-delay: 8s;
 }
 
 @keyframes float {
@@ -74,21 +80,6 @@ canvas#network {
     50%  { transform: translate(50px, -30px) scale(1.2); }
     100% { transform: translate(-50px, 60px) scale(1); }
 }
-
-body::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.3'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  animation: noiseShift 10s infinite linear;
-  pointer-events: none;
-  mix-blend-mode: soft-light;
-  opacity: 0.4;
-}
-
-
 
 @keyframes noiseShift {
     0%   { background-position: 0 0; }
@@ -133,16 +124,12 @@ a:hover {
 
 .box{
     background: #000000;
-    height: 250px;
-    width: 500px;
-    /* aspect-ratio: 1/1; */
     border-radius: 10px;
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    margin: 10px;
 }
 
 @property --deg{
@@ -197,17 +184,118 @@ a:hover {
 }
 
 .glass {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: inherit;
-    background: conic-gradient(
-        from 45deg at center,
-        #ffffff10,
-        transparent 10%
-    );
-    z-index: 1;
-    pointer-events: none;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+
+  background: conic-gradient(
+    from 30deg at 33% 110%,   /* 1/3 по горизонтали и вертикали */
+    rgba(255, 255, 255, 0.1),
+    transparent 5%
+  );
+
+  box-shadow:
+    0 0 20px 5px rgba(255, 255, 255, 0.05),
+    inset 0 0 30px 5px rgba(255, 255, 255, 0.1);
+
+  pointer-events: none;
+  z-index: 1;
+}
+
+#readme {
+  max-height: none;    /* или вообще не задавать */
+  overflow: visible;   /* чтобы прокрутка не была на блоке */
+  padding: 20px;
+
+  color: #eee;
+  border-radius: 10px;
+  max-width: 900px;
+  margin: auto auto;
+  font-family: "Century Gothic", sans-serif;
+  line-height: 1.6;
+  box-shadow: 0 0 15px rgba(0,0,0,0.6);
+  overflow-wrap: anywhere;
+}
+
+#readme p[align="center"],
+#readme div[align="center"],
+#readme h2[align="center"] {
+  text-align: center;
+  width: 100%;
+}
+
+#readme table[align="center"] {
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: collapse;
+  width: auto; /* ширина зависит от содержимого */
+  display: table; /* стандартное отображение таблицы */
+  max-width: 800px; /* ограничение по ширине */
+}
+
+#readme table tbody{
+  margin: 0;
+  padding: 8px 12px;
+  text-align: left; /* меняй на center, если хочешь */
+  vertical-align: middle;
+}
+#readme ul, #readme ol {
+  padding-left: 1.2em;   /* отступ слева, под маркеры */
+  margin-left: 0;        /* или чуть меньше, чтобы выровнять */
+  list-style-position: outside; /* маркеры снаружи, но в рамках отступа */
+}
+
+
+
+/* Стили для ссылок внутри readme */
+#readme a {
+  color: #00c3ff;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.3s ease;
+}
+
+#readme a:hover {
+  border-color: #00c3ff;
+  text-decoration: none;
+}
+
+/* Заголовки в readme */
+#readme h1, #readme h2, #readme h3 {
+  color: aquamarine;
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+}
+
+/* Картинки */
+#readme img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+.noise {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  animation: noiseShift 10s infinite linear;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+  opacity: 0.4;
+  z-index: 2;
+}
+
+#background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
 }
