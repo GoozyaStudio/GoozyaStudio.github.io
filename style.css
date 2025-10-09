@@ -91,6 +91,7 @@ h1{
     color: aquamarine;
     margin-top: 0;
     margin-bottom: 0;
+    font-size: 1.75em;
 }
 
 p{
@@ -101,6 +102,7 @@ p{
     text-align: justify;
     margin-top: 15px;
     margin-bottom: 0;
+    font-size: 1em;
 }
 
 a {
@@ -205,8 +207,8 @@ a:hover {
 }
 
 #readme {
-  max-height: none;    /* или вообще не задавать */
-  overflow: visible;   /* чтобы прокрутка не была на блоке */
+  max-height: none;
+  overflow: visible;
   padding: 20px;
 
   color: #eee;
@@ -230,26 +232,22 @@ a:hover {
   margin-left: auto;
   margin-right: auto;
   border-collapse: collapse;
-  width: auto; /* ширина зависит от содержимого */
-  display: table; /* стандартное отображение таблицы */
-  max-width: 800px; /* ограничение по ширине */
+  width: auto;
+  display: table;
+  max-width: 800px;
 }
 
 #readme table tbody{
   margin: 0;
   padding: 8px 12px;
-  text-align: left; /* меняй на center, если хочешь */
+  text-align: left;
   vertical-align: middle;
 }
 #readme ul, #readme ol {
-  padding-left: 1.2em;   /* отступ слева, под маркеры */
-  margin-left: 0;        /* или чуть меньше, чтобы выровнять */
-  list-style-position: outside; /* маркеры снаружи, но в рамках отступа */
+  padding-left: 1.2em;
+  margin-left: 0;
+  list-style-position: outside;
 }
-
-
-
-/* Стили для ссылок внутри readme */
 #readme a {
   color: #00c3ff;
   text-decoration: none;
@@ -262,16 +260,18 @@ a:hover {
   text-decoration: none;
 }
 
-/* Заголовки в readme */
 #readme h1, #readme h2, #readme h3 {
   color: aquamarine;
-  margin-top: 1.2em;
-  margin-bottom: 0.6em;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
 }
 
-/* Картинки */
+#readme br:nth-of-type(2) {
+  display: none;
+}
+
 #readme img {
-  max-width: 100%;
+  max-width: 80%;
   height: auto;
   border-radius: 6px;
   margin: 10px 0;
@@ -313,11 +313,11 @@ a:hover {
 
   #readme {
     padding: 15px;
-    font-size: 14px;
+    font-size: 12px;
   }
 
   #readme h1, #readme h2, #readme h3 {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   #readme table {
@@ -345,11 +345,18 @@ a:hover {
   }
 
   #readme img {
-      max-width: auto;
+      max-width: 25%;
       height: auto;
       border-radius: 6px;
       margin: 0;
       padding: 0;
+  }
+
+  img[alt="My Skills"] {
+      width: auto;
+      height: auto;
+      max-width: none !important;
+      max-height: none !important;
   }
 
   .blob {
