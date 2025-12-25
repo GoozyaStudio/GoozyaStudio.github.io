@@ -1,187 +1,167 @@
 const canvas = document.getElementById('network');
 const ctx = canvas.getContext('2d');
 
-let W, H, time = 0;
-let mouse = { x: -9999, y: -9999, vx: 0, vy: 0 };
-let scrollFactor = 1;
-
-const MAX_DIST = 150;
-const MIN_DIST = 50;
-
-const layers = [
-    { count: 45, speed: 0.5, size: [5, 7], sway: 0.15 },
-    { count: 30, speed: 0.8, size: [7, 10], sway: 0.35 },
-    { count: 20, speed: 1.2, size: [10, 14], sway: 0.7 }
-];
-
+let W, H;
 let flakes = [];
-let links = [];
+let time = 0;
+let mouse = { x: -9999, y: -9999 };
 
+const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+// ================= НАСТРОЙКИ =================
+const density = isMobile ? 0.000015 : 0.000035;
+const MAX_FLAKES = isMobile ? 120 : 220;
+
+const MAX_DIST = isMobile ? 90 : 140;
+const MAX_LINKS_PER_FLAKE = isMobile ? 2 : 4;
+
+const GOLD_CHANCE = 0.04; // 4% золотых
+// ============================================
+
+// ---------- resize ----------
 function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
 }
 window.addEventListener('resize', resize);
 resize();
 
+// ---------- mouse ----------
 document.addEventListener('mousemove', e => {
-    mouse.vx = e.clientX - mouse.x;
-    mouse.vy = e.clientY - mouse.y;
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
 });
 
-window.addEventListener('scroll', () => {
-    scrollFactor = Math.max(0.4, 1 - window.scrollY / 800);
-});
+// ---------- utils ----------
+function rand(a,b){ return Math.random()*(b-a)+a }
 
-function rand(a, b) { return Math.random() * (b - a) + a; }
-function smoothstep(edge0, edge1, x) {
-    const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-    return t * t * (3 - 2 * t);
+// ---------- create flake ----------
+function createFlake() {
+  const gold = Math.random() < GOLD_CHANCE;
+
+  return {
+    x: Math.random()*W,
+    y: Math.random()*H,
+    dx: 0,
+    dy: 0,
+    baseDy: gold ? rand(0.4,0.7) : rand(0.6,1.2),
+    size: gold ? rand(5,6) : rand(3,6),
+    sway: Math.random()*100,
+    swayPower: gold ? 0.25 : 0.5,
+    rot: Math.random()*Math.PI,
+    rotSpeed: rand(-0.004,0.004),
+    gold
+  };
 }
 
-function createFlake(layer, accent = false) {
-    return {
-        x: Math.random() * W,
-        y: Math.random() * H,
-        dx: 0,
-        dy: 0,
-        baseDy: layer.speed,
-        size: rand(...layer.size) * (accent ? 1.3 : 1),
-        sway: Math.random() * 100,
-        swayPower: layer.sway,
-        rot: Math.random() * Math.PI,
-        rotSpeed: rand(-0.004, 0.004),
-        accent
-    };
+// ---------- snowflake draw ----------
+function drawSnowflake(p){
+  ctx.save();
+  ctx.translate(p.x,p.y);
+  ctx.rotate(p.rot);
+
+  if (p.gold) {
+    ctx.strokeStyle = 'rgba(255,215,140,0.95)';
+    ctx.lineWidth = 1.6;
+    if (!isMobile) {
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = 'rgba(255,200,120,0.6)';
+    }
+  } else {
+    ctx.strokeStyle = 'rgba(235,255,255,0.95)';
+    ctx.lineWidth = 1.2;
+  }
+
+  for(let i=0;i<6;i++){
+    ctx.rotate(Math.PI/3);
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(0,p.size);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+  ctx.shadowBlur = 0;
 }
 
-// снежинки
-layers.forEach(l => {
-    for (let i = 0; i < l.count; i++) flakes.push(createFlake(l));
-});
-for (let i = 0; i < 4; i++) flakes.push(createFlake(layers[2], true));
+// ---------- garland ----------
+function drawGarland(a, b, alpha){
+  const bulbs = isMobile ? 3 : 6;
+  const r = isMobile ? 0.6 : 1.2;
 
-// гирлянда
-for (let i = 0; i < flakes.length; i++) {
-    for (let j = i + 1; j < flakes.length; j++) links.push({ a: flakes[i], b: flakes[j] });
+  for(let i=0;i<=bulbs;i++){
+    const t = i / bulbs;
+    const x = a.x + (b.x - a.x) * t;
+    const y = a.y + (b.y - a.y) * t;
+
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle = `rgba(200,230,255,${alpha * 0.6})`;
+    ctx.fill();
+  }
 }
 
-function drawSnowflake(p) {
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rot);
+// ---------- animate ----------
+function animate(){
+  ctx.clearRect(0,0,W,H);
+  time++;
 
-    ctx.strokeStyle = p.accent
-        ? 'rgba(255,230,170,0.9)'
-        : 'rgba(235,255,255,0.95)';
-    ctx.lineWidth = p.accent ? 1.5 : 1.2;
+  // ===== ПЛАВНАЯ ПЛОТНОСТЬ =====
+  const desired = Math.min(Math.floor(W * H * density), MAX_FLAKES);
+  if (flakes.length < desired) flakes.push(createFlake());
+  else if (flakes.length > desired) flakes.pop();
 
-    for (let i = 0; i < 6; i++) {
-        ctx.rotate(Math.PI / 3);
+  // ===== ГИРЛЯНДЫ (ОПТИМИЗИРОВАННЫЕ) =====
+  for (let i = 0; i < flakes.length; i++) {
+    let links = 0;
+    const a = flakes[i];
 
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(0, p.size);
-        ctx.stroke();
+    for (let j = i + 1; j < flakes.length && links < MAX_LINKS_PER_FLAKE; j++) {
+      const b = flakes[j];
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      const d = Math.hypot(dx, dy);
 
-        ctx.beginPath();
-        ctx.moveTo(0, p.size * 0.65);
-        ctx.lineTo(p.size * 0.35, p.size * 0.45);
-        ctx.stroke();
+      if (d < MAX_DIST) {
+        drawGarland(a, b, 1 - d / MAX_DIST);
+        links++;
+      }
+    }
+  }
 
-        ctx.beginPath();
-        ctx.moveTo(0, p.size * 0.65);
-        ctx.lineTo(-p.size * 0.35, p.size * 0.45);
-        ctx.stroke();
+  // ===== СНЕГ =====
+  for (const p of flakes) {
+    p.sway += 0.01;
+    p.rot += p.rotSpeed;
+
+    // отталкивание от мыши
+    const dx = p.x - mouse.x;
+    const dy = p.y - mouse.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 140 && dist > 1) {
+      const f = (1 - dist/140) * 0.4;
+      p.dx += (dx/dist) * f;
+      p.dy += (dy/dist) * f;
     }
 
-    ctx.restore();
-}
+    p.dx *= 0.95;
+    p.dy *= 0.95;
 
-const GARLAND_COLORS = [
-    [255, 195, 195],
-    [200, 255, 225],
-    [200, 220, 255],
-    [255, 235, 200]
-];
+    p.y += p.baseDy + p.dy;
+    p.x += p.dx + Math.sin(p.sway) * p.swayPower;
 
-function drawGarland(a, b, strength) {
-    const bulbs = 7;
-    for (let i = 0; i <= bulbs; i++) {
-        const k = i / bulbs;
-        const x = a.x + (b.x - a.x) * k;
-        const y = a.y + (b.y - a.y) * k;
-        const c = GARLAND_COLORS[i % GARLAND_COLORS.length];
-        const pulse = 0.6 + Math.sin(time * 0.04 + i) * 0.25;
-        const alpha = strength * pulse * scrollFactor * 0.75;
-
-        ctx.beginPath();
-        ctx.arc(x, y, 2.2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${alpha})`;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = `rgb(${c[0]},${c[1]},${c[2]})`;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+    if (p.y > H + 40) {
+      p.y = -40;
+      p.x = Math.random() * W;
+      p.dx = p.dy = 0;
     }
-}
+    if (p.x < -40) p.x = W + 40;
+    if (p.x > W + 40) p.x = -40;
 
-function drawFog() {
-    const g = ctx.createLinearGradient(0, H * 0.75, 0, H);
-    g.addColorStop(0, 'rgba(200,255,255,0)');
-    g.addColorStop(1, 'rgba(180,220,255,0.18)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, H * 0.75, W, H);
-}
+    drawSnowflake(p);
+  }
 
-function animate() {
-    ctx.clearRect(0, 0, W, H);
-    time++;
-
-    for (const l of links) {
-        const dx = l.a.x - l.b.x;
-        const dy = l.a.y - l.b.y;
-        const d = Math.hypot(dx, dy);
-        if (d < MAX_DIST) drawGarland(l.a, l.b, smoothstep(MAX_DIST, MIN_DIST, d));
-    }
-
-    for (const p of flakes) {
-        p.sway += 0.01;
-        p.rot += p.rotSpeed;
-
-        // отталкивание от мыши
-        const dx = p.x - mouse.x;
-        const dy = p.y - mouse.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < 160 && dist > 1) {
-            const force = (1 - dist / 160) * 0.5;
-            p.dx += (dx / dist) * force;
-            p.dy += (dy / dist) * force;
-        }
-
-        // демпфирование скорости
-        p.dx *= 0.96;
-        p.dy *= 0.96;
-
-        // вертикальная скорость + падение
-        p.y += p.baseDy + p.dy;
-        p.x += p.dx + Math.sin(p.sway) * p.swayPower;
-
-        if (p.y > H + 40) {
-            p.y = -40;
-            p.x = Math.random() * W;
-            p.dx = 0;
-            p.dy = 0;
-        }
-        if (p.x < -40) p.x = W + 40;
-        if (p.x > W + 40) p.x = -40;
-
-        drawSnowflake(p);
-    }
-
-    drawFog();
-    requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 }
 
 animate();
