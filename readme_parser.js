@@ -1,74 +1,129 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const UPDATE_HOUR = 19; // час обновления по cron (UTC или твоему времени)
-    const now = new Date();
-    const lastUpdateStr = localStorage.getItem('readme_last_check');
-    const lastUpdate = lastUpdateStr ? new Date(lastUpdateStr) : null;
 
-    let needUpdate = false;
+    const url = 'https://api.github.com/repos/GoozyaStudio/.github/contents/profile/README.md';
 
-    if (!lastUpdate) {
-        // Если ещё не было загрузок
-        needUpdate = true;
-    } else {
-        // Определяем дату "следующего обновления" после lastUpdate
-        let nextUpdate = new Date(lastUpdate);
-        nextUpdate.setHours(UPDATE_HOUR, 0, 0, 0);
+    const renderMarkdown = (md) => {
+        const htmlRaw = marked.parse(md);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlRaw;
 
-        // Если lastUpdate было до 19:00 того дня — обновление уже в тот же день
-        if (lastUpdate.getHours() < UPDATE_HOUR) {
-            nextUpdate.setHours(UPDATE_HOUR, 0, 0, 0);
-        } else {
-            // Иначе на следующий день
-            nextUpdate.setDate(nextUpdate.getDate() + 1);
-        }
+        const profileBase =
+            'https://raw.githubusercontent.com/GoozyaStudio/.github/main/profile/';
 
-        // Если текущее время >= времени следующего обновления — пора качать
-        if (now >= nextUpdate) {
-            needUpdate = true;
-        }
-    }
+        const rootBase =
+            'https://raw.githubusercontent.com/GoozyaStudio/.github/main/';
 
-    const url = 'https://raw.githubusercontent.com/GoozyaStudio/.github/main/profile/README.md';
 
-    fetch(url, { cache: needUpdate ? "no-cache" : "default" })
-        .then(res => res.text())
-        .then(md => {
-            if (needUpdate) {
-                localStorage.setItem('readme_last_check', now.toISOString());
+        tempDiv.querySelectorAll('img').forEach(img => {
+            const src = img.getAttribute('src');
+
+            if (src && !src.startsWith('http') && !src.startsWith('data:')) {
+
+                if (src.startsWith('../')) {
+                    img.src = rootBase + src.slice(3);
+
+                } else if (src.startsWith('./')) {
+                    img.src = profileBase + src.slice(2);
+
+                } else {
+                    img.src = profileBase + src;
+                }
             }
 
-            const htmlRaw = marked.parse(md);
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlRaw;
-
-            const profileBase = 'https://raw.githubusercontent.com/GoozyaStudio/.github/main/profile/';
-            const rootBase = 'https://raw.githubusercontent.com/GoozyaStudio/.github/main/';
-
-            const imgPromises = [];
-
-            tempDiv.querySelectorAll('img').forEach(img => {
-                const src = img.getAttribute('src');
-                if (src && !src.startsWith('http') && !src.startsWith('data:')) {
-                    let finalSrc;
-                    if (src.startsWith('../')) {
-                        finalSrc = rootBase + src.slice(3);
-                    } else if (src.startsWith('./')) {
-                        finalSrc = profileBase + src.slice(2);
-                    } else {
-                        finalSrc = profileBase + src;
-                    }
-                    img.src = finalSrc;
-                }
-
-                const p = new Promise(resolve => {
-                    img.onload = () => resolve(true);
-                    img.onerror = () => resolve(false);
-                });
-                imgPromises.push(p);
-            });
-
-            Promise.all(imgPromises).then(() => {
-                document.getElementById('readme').innerHTML = tempDiv.innerHTML;
-            });
+            img.loading = 'lazy';
         });
+
+
+        document.getElementById('readme').innerHTML = tempDiv.innerHTML;
+    }
+
+
+    // Загружаем сохраненный README сразу
+    const cachedReadme = localStorage.getItem('readme_cache');
+
+    if (cachedReadme) {
+        renderMarkdown(cachedReadme);
+    }
+
+
+    // Старый ETag
+    const oldETag = localStorage.getItem('readme_etag');
+
+
+    const headers = {
+        'Accept': 'application/vnd.github+json'
+    };
+
+
+    if (oldETag) {
+        headers['If-None-Match'] = oldETag;
+    }
+
+
+    fetch(url, {
+        headers: headers,
+        cache: 'no-cache'
+    })
+
+    .then(response => {
+
+        // README не менялся
+        if (response.status === 304) {
+            return null;
+        }
+
+
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`);
+        }
+
+
+        // сохраняем новый ETag
+        const newETag = response.headers.get('etag');
+
+        if (newETag) {
+            localStorage.setItem('readme_etag', newETag);
+        }
+
+
+        return response.json();
+    })
+
+
+    .then(data => {
+
+        // был 304
+        if (!data) {
+            return;
+        }
+
+
+        const bytes = Uint8Array.from(
+            atob(data.content.replace(/\n/g, '')),
+            c => c.charCodeAt(0)
+        );
+
+
+        const md = new TextDecoder('utf-8').decode(bytes);
+
+
+        localStorage.setItem('readme_cache', md);
+
+
+        renderMarkdown(md);
+
+    })
+
+
+    .catch(err => {
+
+        console.error(err);
+
+        if (!cachedReadme) {
+            document.getElementById('readme').textContent =
+                'Ошибка загрузки README';
+        }
+
+    });
+
 });
